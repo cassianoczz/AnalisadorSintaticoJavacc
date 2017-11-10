@@ -1,0 +1,86 @@
+// ---------------------------------------------------------
+// Exemplo 8
+// - Reconhecer numero ( (plus|minus|times|divide) numero )*
+//   - Agora: 3 + 4 * 2 - 5
+//   - Atencao: precedencia de operadores nao respeitada!!!)
+// ---------------------------------------------------------
+
+options {
+      STATIC = false; /* os metodos e atributos nao devem ser estáticos */
+}
+PARSER_BEGIN(Calculadora)
+      class Calculadora {
+           static public void main( String[] args )
+           throws ParseException, TokenMgrError {
+                /* Estas classes serao geradas pelo JavaCC */
+                Calculadora parser = new Calculadora( System.in ) ;
+                parser.Start();
+            }
+      }
+PARSER_END(Calculadora)
+
+// ---------------------------------------------------------
+// Lexico
+// ---------------------------------------------------------
+
+SKIP : { " "    /* Estes caracteres devem ser saltados */
+       | "\t"
+       }     
+TOKEN : { < EOL :  "\n"   /* Reconhecer "nova linha"s */
+                | "\r"
+                | "\r\n" > }
+TOKEN : { < PLUS : "+" > }  /* O caracter "+" retorna o token PLUS */
+TOKEN : { < MINUS : "-" > }  /* O caracter "-" retorna o token MINUS */
+TOKEN : { < TIMES : "*" > }  /* O caracter "*" retorna o token TIMES */
+TOKEN : { < DIVIDE : "/" > }  /* O caracter "/" retorna o token DIVIDE */
+TOKEN : { < NUMBER : (["0"-"9"])+ > } /* Um numero: token NUMBER */
+
+// EOF : Retornado pelo implicitamente
+
+// ---------------------------------------------------------
+// Sintatico
+// ---------------------------------------------------------
+void Start() :
+{
+ int aux;
+}
+{
+ (
+  aux = Expressao()
+  <EOL> { System.out.println("Resultado: " + aux); }
+ )*
+ <EOF>
+}
+
+int Expressao() :
+{
+ int aux1, aux2;
+}
+{
+ aux1 = Operando()
+ (
+  (
+   <PLUS>
+   aux2 = Operando() { aux1 += aux2; }
+  |
+   <MINUS>
+   aux2 = Operando() { aux1 -= aux2; }
+  |
+   <TIMES>
+   aux2 = Operando() { aux1 *= aux2; }
+  |
+   <DIVIDE>
+   aux2 = Operando() { aux1 /= aux2; }
+  )
+ )*
+ { return aux1; }
+}
+
+int Operando() :
+{
+ Token t;
+}
+{
+ t = <NUMBER> { return Integer.parseInt(t.image); }
+}
+

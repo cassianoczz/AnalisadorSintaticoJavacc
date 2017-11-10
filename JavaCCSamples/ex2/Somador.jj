@@ -1,0 +1,62 @@
+// ---------------------------------------------------------
+// Exemplo 2
+// - Reconhecer numero ( plus numero )*
+// - Imprimir o conteudo dos lexemas. Lembre que um objeto Token
+//          tem dois campos: kind (int com um identificador do
+//          token) e image (string com o lexema)
+// ---------------------------------------------------------
+
+options {
+      STATIC = false; /* os metodos e atributos nao devem ser estáticos */
+}
+PARSER_BEGIN(Somador)
+      class Somador {
+           static public void main( String[] args )
+           throws ParseException, TokenMgrError {
+                /* Estas classes serao geradas pelo JavaCC */
+                Somador parser = new Somador( System.in ) ;
+                parser.Start();
+            }
+      }
+PARSER_END(Somador)
+
+// ---------------------------------------------------------
+// Lexico
+// ---------------------------------------------------------
+
+SKIP : { " "    /* Estes caracteres devem ser saltados */
+       | "\t"
+       }     
+SKIP : { "\n"   /* Saltar tambem variantes sobre o "nova linha" */
+       | "\r"
+       | "\r\n" }
+TOKEN : { < PLUS : "+" > }  /* O caracter "+" retorna o token PLUS */
+TOKEN : { < NUMBER : (["0"-"9"])+ > } /* Um numero: token NUMBER */
+
+// EOF : Retornado pelo implicitamente
+
+// ---------------------------------------------------------
+// Sintatico
+// ---------------------------------------------------------
+void Start() :
+{
+ Token t;
+ int   aux;
+}
+{
+ t = <NUMBER> {
+   aux = Integer.parseInt(t.image);
+   System.out.println("Lexema: " + aux); 
+  System.out.println("Position: " + t.kind);}
+ (
+ t = <PLUS> {
+   System.out.println("Lexema: " + t.image);
+   System.out.println("Position: " + t.kind); }
+ t = <NUMBER> {
+   aux = Integer.parseInt(t.image);
+   System.out.println("Lexema: " + aux);
+   System.out.println("Position: " + t.kind); }
+ )*
+ <EOF>
+}
+

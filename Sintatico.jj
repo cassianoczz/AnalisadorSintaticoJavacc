@@ -1,0 +1,26 @@
+options {
+        STATIC = false;
+}
+PARSER_BEGIN(Sintatico)
+        class Sintatico{
+            static public void main (String[] args)
+            throws ParseException, TokenMgrError{
+                Sintatico parser = new Sintatico(System.in);
+                parser.Start();
+            }
+        }    
+PARSER_END(Sintatico)
+
+SKIP : { " " | "\t" }     
+SKIP : { "\n" | "\r" | "\r\n" }
+//LEXICO
+TOKEN : { < MAIN : "MAIN" > }  
+TOKEN : { < FOR : "FOR" > }  
+TOKEN : { < NUMBER : (["0"-"9"])+ > }
+
+void Start() : {}
+{
+<MAIN>
+(<FOR> <NUMBER>)
+<EOF>
+}

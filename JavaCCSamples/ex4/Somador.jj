@@ -1,0 +1,62 @@
+// ---------------------------------------------------------
+// Exemplo 4
+// - Reconhecer ( numero plus numero )*
+// - Para cada soma lida, apresentar o resultado
+// - Organizar o codigo
+// ---------------------------------------------------------
+
+options {
+      STATIC = false; /* os metodos e atributos nao devem ser estáticos */
+}
+PARSER_BEGIN(Somador)
+      class Somador {
+           static public void main( String[] args )
+           throws ParseException, TokenMgrError {
+                /* Estas classes serao geradas pelo JavaCC */
+                Somador parser = new Somador( System.in ) ;
+                parser.Start();
+            }
+      }
+PARSER_END(Somador)
+
+// ---------------------------------------------------------
+// Lexico
+// ---------------------------------------------------------
+
+SKIP : { " "    /* Estes caracteres devem ser saltados */
+       | "\t"
+       }     
+SKIP : { "\n"   /* Saltar tambem variantes sobre o "nova linha" */
+       | "\r"
+       | "\r\n" }
+TOKEN : { < PLUS : "+" > }  /* O caracter "+" retorna o token PLUS */
+TOKEN : { < NUMBER : (["0"-"9"])+ > } /* Um numero: token NUMBER */
+
+// EOF : Retornado pelo implicitamente
+
+// ---------------------------------------------------------
+// Sintatico
+// ---------------------------------------------------------
+void Start() :
+{
+ int aux1, aux2;
+}
+{
+ (
+ aux1 = Operando()
+ <PLUS>
+ aux2 = Operando() { 
+  aux1 += aux2;
+  System.out.println("Resultado: " + aux1); }
+ )*
+ <EOF>
+}
+
+int Operando() :
+{
+ Token t;
+}
+{
+ t = <NUMBER> { return Integer.parseInt(t.image); }
+}
+

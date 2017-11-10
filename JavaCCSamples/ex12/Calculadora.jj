@@ -1,0 +1,116 @@
+// ---------------------------------------------------------
+// Exemplo 12
+// - Expressoes contendo o valor calculado pela expressao
+//   anterior (representado por $)
+//   Ex: 2 * 3 - 1 <EOL>
+//       Resultado: 5
+//       10 * $ <EOL>
+//       Resultado: 50
+// ---------------------------------------------------------
+
+options {
+      STATIC = false; /* os metodos e atributos nao devem ser estáticos */
+}
+PARSER_BEGIN(Calculadora)
+      class Calculadora {
+           int ultimo;
+
+           static public void main( String[] args )
+           throws ParseException, TokenMgrError {
+                /* Estas classes serao geradas pelo JavaCC */
+                Calculadora parser = new Calculadora( System.in ) ;
+                parser.Start();
+            }
+      }
+PARSER_END(Calculadora)
+
+// ---------------------------------------------------------
+// Lexico
+// ---------------------------------------------------------
+
+SKIP : { " "    /* Estes caracteres devem ser saltados */
+       | "\t"
+       }     
+TOKEN : { < EOL :  "\n"   /* Reconhecer "nova linha"s */
+                | "\r"
+                | "\r\n" > }
+TOKEN : { < LAST : "$" > }  /* O caracter "(" para abre parenteses */
+TOKEN : { < ABREPAR : "(" > }  /* O caracter "(" para abre parenteses */
+TOKEN : { < FECHAPAR : ")" > }  /* O caracter ")" para fecha parenteses */
+TOKEN : { < PLUS : "+" > }  /* O caracter "+" retorna o token PLUS */
+TOKEN : { < MINUS : "-" > }  /* O caracter "-" retorna o token MINUS */
+TOKEN : { < TIMES : "*" > }  /* O caracter "*" retorna o token TIMES */
+TOKEN : { < DIVIDE : "/" > }  /* O caracter "/" retorna o token DIVIDE */
+TOKEN : { < NUMBER : (["0"-"9"])+ > } /* Um numero: token NUMBER */
+
+// EOF : Retornado pelo implicitamente
+
+// ---------------------------------------------------------
+// Sintatico
+// ---------------------------------------------------------
+void Start() :
+{
+}
+{
+ (
+  ultimo = Expressao()
+  <EOL> { System.out.println("Resultado: " + ultimo); }
+ )*
+ <EOF>
+}
+
+int Expressao() :
+{
+ int aux1, aux2;
+}
+{
+ aux1 = Termo()
+ (
+  <PLUS>
+  aux2 = Termo() { aux1 += aux2; }
+ |
+  <MINUS>
+  aux2 = Termo() { aux1 -= aux2; }
+ )*
+ { return aux1; }
+}
+
+int Termo() :
+{
+ int aux1, aux2;
+}
+{
+ aux1 = Operando()
+ (
+  <TIMES>
+  aux2 = Operando() { aux1 *= aux2; }
+ |
+  <DIVIDE>
+  aux2 = Operando() { aux1 /= aux2; }
+ )*
+ { return aux1; }
+}
+ 
+int Operando() :
+{
+ Token t;
+ int   aux;
+}
+{
+  t = <NUMBER> { return Integer.parseInt(t.image); }
+ |
+  <MINUS>
+  aux = Operando() { return -aux; }
+ |
+  <PLUS>
+  aux = Operando() { return aux; }
+ |
+  <ABREPAR>
+  aux = Expressao()
+  <FECHAPAR>
+  { return aux; }
+ |
+  <LAST>
+  { return ultimo; }
+}
+
