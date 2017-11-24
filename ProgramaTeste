@@ -1,0 +1,5 @@
+.boolean = varbool true;
+.char = varchar 'LETRASSSSSSSSSSSSSS';
+.float = varfloat 123.123;
+.int = varint 13141412412123;  
+for (x=1; x<=100; x++){}

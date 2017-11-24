@@ -2,25 +2,271 @@ options {
         STATIC = false;
 }
 PARSER_BEGIN(Sintatico)
-        class Sintatico{
-            static public void main (String[] args)
-            throws ParseException, TokenMgrError{
-                Sintatico parser = new Sintatico(System.in);
-                parser.Start();
+class Sintatico {
+static public void main( String[] args )
+      throws ParseException, TokenMgrError {
+            Sintatico parser;
+            /* Estas classes serao geradas pelo JavaCC */
+            if(args.length == 0){
+                        System.out.println("LanguageCassiano_Elvis: Reading from keyboard input...");
+                        parser = new Sintatico( System.in );
+                  }else if(args.length == 1){
+                        System.out.println("LanguageCassiano_Elvis: Reading from file" +args[0]);
+                        try {
+                              parser = new Sintatico(new java.io.FileInputStream(args[0]));
+                        }catch(java.io.FileNotFoundException e){
+                              System.out.println("LanguageCassiano_Elvis: file" +args[0]+ "not found.");
+                              return;
+                        }
+                  }else {
+                        System.out.println("LanguageCassiano_Elvis:  Usage is one of:");
+                        System.out.println("         java fileJavaCC < inputfile");
+                        System.out.println("OR");
+                        System.out.println("         java fileJavaCC inputfile");
+                        return;
+                  }
+                  try{
+                  parser.Start();
+                  System.out.println("LanguageCassiano_Elvis:  fileJavaCC parsed successfully.");
+                  } catch (ParseException e) {
+                  System.out.println(e.getMessage());
+                  System.out.println("LanguageCassiano_Elvis:  Encountered errors during parse.");
+                  }
             }
-        }    
+      //}
+}
 PARSER_END(Sintatico)
 
-SKIP : { " " | "\t" }     
-SKIP : { "\n" | "\r" | "\r\n" }
-//LEXICO
-TOKEN : { < MAIN : "MAIN" > }  
-TOKEN : { < FOR : "FOR" > }  
-TOKEN : { < NUMBER : (["0"-"9"])+ > }
+// ---------------------------------------------------------
+// Lexico
+// ---------------------------------------------------------
 
-void Start() : {}
-{
-<MAIN>
-(<FOR> <NUMBER>)
-<EOF>
+/* WHITE SPACE */
+SKIP : {" " | "\t" | "\n" | "\r" | "\f"}
+
+/* RESERVED WORDS AND LITERALS */
+TOKEN : { < BOOLEAN: "boolean" > | < CHAR: "char" > | < INT: "int" > | < FOR: "for" > | < IF: "if" > | < MAIN: "main" > }
+
+/* LITERALS */
+TOKEN :{ < INTEGER_LITERAL: <DECIMAL_LITERAL> > | <#DECIMAL_LITERAL: (["1"-"9"])+ >}
+
+TOKEN : { < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
+|
+/*Values for Unicode Escapes Allowed in Identifiers lists the character values for 
+the Unicode escapes that are allowed in the LETTER symbol. The columns are Unicode
+ and Character.
+
+Constraint Definition Language (CDL) Guide Formal Grammar
+
+The notation used in this code to present the lexical grammar of CDL 
+follows the Extended Backus Normal Form (EBNF - notation to express context free grammar
+to John Backus) symbols. The table Notation Used in Presenting CDL Grammar (EBNF) lists 
+the symbols used in presenting CDL Grammar using EBNF, 
+and provides a description of each. The symbols help you read this code.*/
+  < #LETTER:
+      [
+       "\u0041"-"\u005a", //A through Z
+       "\u005f", //_ (underscore)
+       "\u0061"-"\u007a" //a through z
+      ]
+  >
+|
+  < #DIGIT:
+      [
+       "\u0030"-"\u0039" // "0"-"9" 
+      ]
+  >
 }
+
+/* SEPARATORS */
+TOKEN : { < LEFTPAREN: "(" > | < RIGHTPAREN: ")" > | < LEFTBRACE: "{" > | < RIGHTBRACE: "}" > | < SEMICOLON: ";" >}
+
+/* OPERATORS */
+TOKEN : { < ASSIGN: "=" >
+| < GREATERTHAN: ">" >
+| < LESSTHAN: "<" >
+| < EQUAL: "==" >
+| < LESSEQUAL: "<=" >
+| < GREATEREQUAL: ">=" >
+| < NOEQUAL: "!=" >
+| < OR: "||" >
+| < AND: "&&" >
+| < INCREMENT: "++" >
+| < DECREMENT: "--" >
+| < PLUS: "+" >
+| < MINUS: "-" >
+| < STAR: "*" >
+| < SLASH: "/" >
+| < PLUSASSIGN: "+=" >
+| < MINUSASSIGN: "-=" >
+}
+// ---------------------------------------------------------
+// Sintatico
+// ---------------------------------------------------------
+
+/*****************************************
+ * THE GRAMMAR SPECIFICATION STARTS HERE *
+ *****************************************/
+
+void Start() : {} { 
+      (main())?
+
+      <EOF>
+}
+
+void main():{} {
+      "main" [("("")")? ("{")]
+
+ FieldDeclaration()
+}
+
+void FieldDeclaration() : {} {
+  Type() VariableDeclarator() ( "," VariableDeclarator() )* ";"
+}
+
+void VariableDeclarator() : {} {
+  VariableDeclaratorId() [ "=" VariableInitializer() ]
+}
+void VariableDeclaratorId() : {} {
+  <IDENTIFIER> ( "[" "]" )*
+}
+void VariableInitializer() : {} {
+  ArrayInitializer() | Expression()
+}
+void ArrayInitializer() : {} {
+  "{" [ ( VariableInitializer() "," )+ ] "}"
+}
+void Type() : {} {
+  ( PrimitiveType() | Name() ) ( "[" "]" )*
+}
+void PrimitiveType() : {} {
+  "boolean" | "char" | "int" 
+}
+void Name() : {} {
+  <IDENTIFIER>
+}
+
+void Expression() : {} {
+  ConditionalExpression() [ AssignmentOperator() Expression() ]
+}
+void AssignmentOperator() : {} {
+  "=" | "+=" | "-=" 
+}
+void ConditionalExpression() : {} {
+  ConditionalOrExpression() [ "?" Expression() ":" ConditionalExpression() ]
+}
+void ConditionalOrExpression() : {} {
+  ConditionalAndExpression() 
+  ( "||" ConditionalAndExpression() )*
+}
+void ConditionalAndExpression() : {} {
+  EqualityExpression() 
+  ( "&&" EqualityExpression() )*
+}
+void EqualityExpression() : {} {
+  RelationalExpression() 
+  ( ( "==" | "!=" ) RelationalExpression() )*
+}
+void RelationalExpression() : {} {
+  AdditiveExpression() 
+  ( ( "<" | ">" | "<=" | ">=" ) AdditiveExpression() )*
+}
+void AdditiveExpression() : {} {
+  MultiplicativeExpression() 
+  ( ( "+" | "-" ) MultiplicativeExpression() )*
+}
+void MultiplicativeExpression() : {} {
+  UnaryExpression() 
+  ( ( "*" | "/" ) UnaryExpression() )*
+}
+void UnaryExpression() : {}{
+  ( "+" | "-" ) UnaryExpression() | PreIncrementExpression() | PreDecrementExpression()
+}
+void PreIncrementExpression() : {} {
+  "++" PrimaryExpression()
+}
+void PreDecrementExpression() : {} {
+  "--" PrimaryExpression() | PostfixExpression()
+}
+void PostfixExpression() : {} {
+  PrimaryExpression() [ "++" | "--" ]
+}
+void PrimaryExpression() : {} {
+  PrimaryPrefix()
+}
+void PrimaryPrefix() : {} {
+  Literal() |  "(" Expression() ")" | Name()
+}
+void Literal() : {} {
+  <INTEGER_LITERAL> | BooleanLiteral()
+}
+void BooleanLiteral() : {} {
+  "true" | "false"
+}
+void Statement() : {} { 
+  Block() | EmptyStatement() | StatementExpression() ";" | IfStatement() | ForStatement() | ReturnStatement()
+}
+void Block() : {} {
+  "{" ( BlockStatement() )* "}"
+}
+void BlockStatement() : {} {
+ (Type() <IDENTIFIER>) LocalVariableDeclaration() ";" | Statement()
+}
+void LocalVariableDeclaration() : {} {
+  Type() VariableDeclarator() ( "," VariableDeclarator() )*
+}
+void EmptyStatement() : {} {
+  ";"
+}
+void StatementExpression() : {} {
+  PreIncrementExpression() | PreDecrementExpression()
+  | 
+  PrimaryExpression() [ "++" | "--" |  AssignmentOperator() Expression()]
+}
+void IfStatement() : {} {
+  "if" "(" Expression() ")" Statement() [ "else" Statement() ]
+}
+void ForStatement() : {} {
+  "for" "(" [ ForInit() ] ";" [ Expression() ] ";" [ ForUpdate() ] ")" Statement()
+}
+void ForInit() : {} {
+  Type() <IDENTIFIER>  LocalVariableDeclaration() | StatementExpressionList()
+}
+void StatementExpressionList() : {} {
+  StatementExpression() ( "," StatementExpression() )*
+}
+void ForUpdate() : {} {
+  StatementExpressionList()
+}
+void ReturnStatement() : {} {
+  "return" [ Expression() ] ";"
+}
+/*
+void MEUVARIAVEL() : {} {
+      (
+            <BOOLEAN> "=" (<VARIAVEL> ("true" | "false")         )+ | 
+            <CHAR>    "=" (<VARIAVEL> ("'" (<LETRA>)+ "'")       )+ |
+            <FLOAT>   "=" (<VARIAVEL> (<NUMERO>)+ "." (<NUMERO>)*)+ |
+            <INT>     "=" (<VARIAVEL> (<NUMERO>)+                )+ 
+      )+
+      <PONTOEVIRGULA>
+}
+
+void MEUFOR() : {} {
+      <FOR>    
+      <ABREPAR>
+      (<VARIAVEL> | MEUVARIAVEL())   
+      <COMPARADOR>
+      <NUMERO>
+      <PONTOEVIRGULA>
+      <VARIAVEL>
+      <COMPARADOR>
+      (<NUMERO> | <VARIAVEL>)
+      <PONTOEVIRGULA>
+      <VARIAVEL>
+      <OPERADOR>
+      <FECHAPAR>
+      <ABRECHAV>
+      <FECHACHAV>
+}
+*/
